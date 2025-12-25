@@ -1,29 +1,40 @@
 import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
 
-const getDatabase = () => {
-    const url = process.env.DATABASE_URL;
-    if (!url || url.length === 0) {
-        // Build-time fallback to prevent BetterAuthError during static generation
+const getDatabaseConfig = () => {
+    // Detect if we are in a build environment (Next.js build phase)
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
+
+    // During build, always use memory SQLite to prevent connection errors
+    if (isBuildPhase || !process.env.DATABASE_URL) {
         return {
             provider: "sqlite",
-            url: "auth_build.db",
+            url: ":memory:",
         };
     }
-    return url.startsWith("postgres")
-        ? { provider: "postgresql", url }
-        : { provider: "sqlite", url: url.replace("sqlite:///", "") };
+
+    const url = process.env.DATABASE_URL;
+    if (url.startsWith("postgres")) {
+        return {
+            provider: "postgresql",
+            url: url,
+        };
+    }
+
+    return {
+        provider: "sqlite",
+        url: url.replace("sqlite:///", ""),
+    };
 };
 
 export const auth = betterAuth({
-    database: getDatabase(),
+    database: getDatabaseConfig(),
     emailAndPassword: {
         enabled: true
     },
     plugins: [
         jwt({
             jwt: {
-                // This secret must match BETTER_AUTH_SECRET in FastAPI backend
                 issuer: "todo-evolution",
                 expiresIn: "7d"
             }
