@@ -97,7 +97,10 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-# NOTE: .env files are NOT ignored per user request
+.env
+.env.local
+.env.vercel
+.env.*.local
 venv/
 ENV/
 env/
@@ -348,7 +351,7 @@ uploads/
 media/
 
 # ==========================================
-# IMPORTANT: Environment files are NOT ignored
+# IMPORTANT: Environment files are now IGNORED
 # ==========================================
-# .env files are intentionally tracked per user request
-# Be careful not to commit sensitive credentials to public repos
+# Secret files (.env.local, .env.vercel) are now hidden from Git
+# Use .env.example files as templates for other developers
