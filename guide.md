@@ -82,12 +82,159 @@ NEXT_PUBLIC_BACKEND_URL="https://your-app.vercel.app/api"
 NEXT_PUBLIC_BETTER_AUTH_URL="https://your-app.vercel.app"
 ```
 
-### Build Command
-To verify the production build locally:
+---
+
+## 🚀 Deploying to Vercel (Combined Frontend + Backend)
+
+This project uses a **unified deployment architecture** where both the Next.js frontend and FastAPI backend are deployed together on Vercel as a single application.
+
+### 🏗️ Architecture Overview
+
+The combined deployment works through these key components:
+
+1. **`api/index.py`** (Root Level)
+   - Acts as a bridge/entry point for Vercel serverless functions
+   - Imports and exposes the FastAPI app from `src/backend/main.py`
+   - Vercel automatically detects this as a Python serverless function
+
+2. **`vercel.json`** (Root Level)
+   - Configures URL rewrites to route API requests to the Python backend
+   - Routes `/api/*`, `/docs`, and `/openapi.json` to `api/index.py`
+   - All other routes are handled by Next.js frontend
+
+3. **`src/frontend/`**
+   - Contains the Next.js application
+   - Vercel automatically detects and builds this as the main application
+   - Frontend makes API calls to `/api/*` which are routed to the backend
+
+### 📂 Deployment File Structure
+```text
+.
+├── api/
+│   └── index.py          # Vercel serverless function entry point
+├── vercel.json           # Routing configuration
+├── src/
+│   ├── backend/          # FastAPI application
+│   │   ├── main.py       # Main FastAPI app
+│   │   └── ...
+│   └── frontend/         # Next.js application (build root)
+│       ├── app/
+│       ├── package.json
+│       └── ...
+└── pyproject.toml        # Python dependencies
+```
+
+### 🔧 Vercel Project Configuration
+
+When setting up your Vercel project:
+
+1. **Root Directory**: Leave as `.` (project root)
+2. **Build Command**: Vercel auto-detects from `src/frontend/package.json`
+3. **Output Directory**: `.next` (auto-detected)
+4. **Install Command**: `npm install` (in `src/frontend`)
+
+### 📝 Environment Variables (Vercel Dashboard)
+
+Add these in your Vercel project settings:
+
+```env
+DATABASE_URL=postgresql://neondb_owner:xxxxx@ep-xxxxx.region.aws.neon.tech/neondb?sslmode=require
+BETTER_AUTH_SECRET=your_complex_random_string_here
+NEXT_PUBLIC_BACKEND_URL=https://your-app-name.vercel.app/api
+NEXT_PUBLIC_BETTER_AUTH_URL=https://your-app-name.vercel.app
+```
+
+> [!IMPORTANT]
+> - `DATABASE_URL`: Get from [Neon Console](https://console.neon.tech) (use Pooled connection string)
+> - `BETTER_AUTH_SECRET`: Generate with `openssl rand -base64 32`
+> - `NEXT_PUBLIC_BACKEND_URL`: Your Vercel URL + `/api`
+> - `NEXT_PUBLIC_BETTER_AUTH_URL`: Your Vercel URL
+
+### 🚀 Deployment Steps
+
+#### Option A: Deploy via Vercel Dashboard
+
+1. **Push to GitHub**:
+   ```powershell
+   git add .
+   git commit -m "Ready for deployment"
+   git push origin master
+   ```
+
+2. **Import to Vercel**:
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your GitHub repository
+   - Vercel auto-detects Next.js configuration
+
+3. **Configure Settings**:
+   - **Framework Preset**: Next.js
+   - **Root Directory**: `./` (leave default)
+   - **Build Command**: (leave default - auto-detected)
+   - **Output Directory**: (leave default - auto-detected)
+
+4. **Add Environment Variables**:
+   - Add all 4 environment variables listed above
+   - Make sure to use your actual Neon database URL
+
+5. **Deploy**:
+   - Click "Deploy"
+   - Wait for build to complete (~2-3 minutes)
+
+#### Option B: Deploy via Vercel CLI
+
+**Starting Directory**: Project root (`d:\Panaverse\Hackathon\2nd_hackathon-phase1-2`)
+
+```powershell
+# Navigate to project root (if not already there)
+cd d:\Panaverse\Hackathon\2nd_hackathon-phase1-2
+
+# Install Vercel CLI (one-time setup)
+npm i -g vercel
+
+# Login to Vercel (one-time setup)
+vercel login
+
+# Deploy from project root
+vercel
+
+# Follow prompts and add environment variables when asked
+```
+
+### ✅ Verify Deployment
+
+After deployment, test these endpoints:
+
+1. **Frontend**: `https://your-app.vercel.app`
+2. **Backend Health**: `https://your-app.vercel.app/api/health`
+3. **API Docs**: `https://your-app.vercel.app/docs`
+4. **OpenAPI Spec**: `https://your-app.vercel.app/openapi.json`
+
+### 🧪 Local Production Build Test
+
+Before deploying, test the production build locally:
+
 ```powershell
 cd src/frontend
 npm run build
+npm start
 ```
+
+### 🔍 Troubleshooting
+
+**Build Fails**:
+- Check that all environment variables are set in Vercel dashboard
+- Verify `api/index.py` correctly imports from `src.backend.main`
+- Ensure `pyproject.toml` includes all Python dependencies
+
+**API Routes Not Working**:
+- Verify `vercel.json` rewrites are configured correctly
+- Check that `NEXT_PUBLIC_BACKEND_URL` points to `/api`
+- Review Vercel function logs in dashboard
+
+**Database Connection Issues**:
+- Ensure using Neon's **Pooled** connection string (not Direct)
+- Verify `sslmode=require` is in the connection string
+- Check Neon database is not paused/suspended
 
 ### 🔐 API Testing (Admin Token)
 When testing the Backend via Swagger (`/docs`) or cURL, you can bypass login using the Master Admin Token.
@@ -112,14 +259,19 @@ This project follows strict **Agentic Development** principles.
 *   **Isolation**: Logic is separated into `src/cli`, `src/backend`, and `src/frontend`.
 *   **SDD Loop**: All features are Spec-Driven. See `specs/` for architectural decisions.
 *   **Security**: Use path/JWT based user isolation in all API endpoints.
-## 🚀 Pushing to GitHub
-Your project is ready to go!
+---
 
-1.  **Create Repository**: Go to GitHub and create a new repository (e.g., `evolution-of-todo`).
-2.  **Push Code**:
-    ```powershell
-    git remote add origin https://github.com/Shafqatsarwar/2nd_hackathon.git
-    git branch -M master
-    git push -u origin master
-    ```
-    done
+## 📤 Pushing to GitHub
+
+1. **Create Repository**: Go to GitHub and create a new repository (e.g., `evolution-of-todo`).
+
+2. **Push Code**:
+   ```powershell
+   git add .
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+   git branch -M master
+   git push -u origin master
+   ```
+
+3. **Next Steps**: After pushing, you can deploy to Vercel (see deployment section above).

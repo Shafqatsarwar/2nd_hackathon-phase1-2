@@ -19,19 +19,38 @@ A command-line tool for managing tasks in local memory.
 
 ### Phase II: Full-Stack Web App (FastAPI + Next.js)
 A multi-user system with persistent storage (Neon PostgreSQL) and JWT Authentication (Better Auth).
-- **Backend**: Python FastAPI + SQLModel.
-- **Frontend**: Next.js 16+ (App Router).
+- **Backend**: Python FastAPI + SQLModel (Port 800).
+- **Frontend**: Next.js 16+ (App Router, Port 3000).
+- **Deployment**: Unified Vercel deployment (frontend + backend combined).
 - **Setup**: See [guide.md](./guide.md) for detailed instructions.
 
 ## 📁 Repository Structure
 ```text
 .
+├── api/
+│   └── index.py       # Vercel serverless entry point (bridges to backend)
 ├── history/           # PHR Records
 ├── specs/             # SDD Specifications
 ├── src/
 │   ├── cli/           # Phase I CLI App
 │   ├── backend/       # Phase II FastAPI service
 │   └── frontend/      # Phase II Next.js application
+├── vercel.json        # Vercel routing configuration
 ├── constitution.md    # Governing Rules
 └── pyproject.toml     # Project Workspace
 ```
+
+## 🚀 Deployment Architecture
+
+This project uses a **unified deployment** approach on Vercel:
+- **Frontend & Backend Combined**: Both deployed as a single Vercel application
+- **`api/index.py`**: Bridges Vercel serverless functions to FastAPI backend
+- **`vercel.json`**: Routes `/api/*` requests to Python backend, all other routes to Next.js
+- **Result**: Single URL serves both frontend UI and backend API
+
+**Live Endpoints** (after deployment):
+- Frontend: `https://your-app.vercel.app`
+- Backend API: `https://your-app.vercel.app/api/*`
+- API Docs: `https://your-app.vercel.app/docs`
+
+See [guide.md](./guide.md) for complete deployment instructions.
