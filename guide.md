@@ -260,7 +260,17 @@ npm start
 - Verify `sslmode=require` is in the connection string
 - Check Neon database is not paused/suspended
 
+### 🔐 Master Admin Access (Bypass Login)
+For development and demonstration purposes, we have a built-in Master Admin Access.
 
+*   **Prebuilt Admin Account**: 
+    *   **Email**: `khansarwar1@hotmail.com`
+    *   **Role**: Admin
+*   **Master Token**: `admin_token`
+*   **How to use (Frontend UI)**:
+    1.  Go to the Dashboard.
+    2.  If not logged in, you can manually set the local storage key `better-auth.session-token` to `admin_token` OR use the "Guest Access" link if available which uses this token.
+    3.  The backend will automatically recognize this token and provide full access to the `admin` account seeded on startup.
 
 ## 🏛️ Architecture & Standards
 This project follows strict **Agentic Development** principles.

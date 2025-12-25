@@ -32,7 +32,9 @@ export default function TaskInterface({ userId, token, title = "Evolution Task M
 
     const fetchTasks = async () => {
         try {
-            const res = await fetch(`${BACKEND_URL}/api/${userId}/tasks`, {
+            const url = `${BACKEND_URL}/api/${userId}/tasks`;
+            console.log("Fetching tasks from:", url); // Diagnostic
+            const res = await fetch(url, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
@@ -119,7 +121,7 @@ export default function TaskInterface({ userId, token, title = "Evolution Task M
                     />
                     <button
                         onClick={addTask}
-                        className="bg-white text-black font-bold px-6 rounded-xl hover:bg-neutral-200 transition-colors active:scale-95"
+                        className="bg-white text-black font-bold px-6 rounded-xl hover:bg-neutral-200 transition-colors active:scale-95 cursor-pointer"
                     >
                         Add
                     </button>
@@ -140,17 +142,20 @@ export default function TaskInterface({ userId, token, title = "Evolution Task M
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => toggleTask(task.id)}
-                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition ${task.completed ? 'bg-purple-600 border-purple-600' : 'border-slate-700 group-hover:border-purple-500'}`}
+                                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition cursor-pointer ${task.completed ? 'bg-purple-600 border-purple-600' : 'border-slate-700 group-hover:border-purple-500'}`}
                                 >
                                     {task.completed && <span className="text-[10px] text-white">✓</span>}
                                 </button>
-                                <span className={`transition ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                                <span
+                                    onClick={() => toggleTask(task.id)}
+                                    className={`transition cursor-pointer select-none ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}
+                                >
                                     {task.title}
                                 </span>
                             </div>
                             <button
                                 onClick={() => deleteTask(task.id)}
-                                className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />

@@ -20,6 +20,16 @@ app = FastAPI(title="The Evolution of Todo - Phase II")
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    # Seed Admin User
+    with Session(engine) as session:
+        admin_email = "khansarwar1@hotmail.com"
+        admin_id = "admin" # Fixed ID for consistency
+        existing = session.exec(select(User).where(User.email == admin_email)).first()
+        if not existing:
+            admin_user = User(id=admin_id, email=admin_email, full_name="Admin")
+            session.add(admin_user)
+            session.commit()
+            print(f"✅ Admin user seeded: {admin_email}")
 
 # Configure CORS
 app.add_middleware(
