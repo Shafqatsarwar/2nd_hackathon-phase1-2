@@ -7,6 +7,8 @@ const getDatabaseConfig = () => {
     const isBuild =
         process.env.NEXT_PHASE === 'phase-production-build' ||
         process.env.CI === 'true' ||
+        process.env.VERCEL === '1' ||
+        process.env.BUILD_ID !== undefined ||
         (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production');
 
     if (isBuild || !process.env.DATABASE_URL) {

@@ -3,14 +3,19 @@
 import { useState, useEffect } from "react";
 
 const getBackendUrl = () => {
-    let url = process.env.NEXT_PUBLIC_BACKEND_URL ||
-        process.env.NEXT_PUBLIC_LOCAL_BACKEND_URL ||
-        (typeof window !== 'undefined'
-            ? `http://${window.location.hostname}:800`
-            : "http://127.0.0.1:800");
+    // 1. Check for manual override from env
+    if (process.env.NEXT_PUBLIC_BACKEND_URL) return process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/$/, "").replace(/\/api$/, "");
+    if (process.env.NEXT_PUBLIC_LOCAL_BACKEND_URL) return process.env.NEXT_PUBLIC_LOCAL_BACKEND_URL.replace(/\/$/, "").replace(/\/api$/, "");
 
-    // Remove trailing slash and /api suffix to normalize
-    return url.replace(/\/$/, "").replace(/\/api$/, "");
+    // 2. Auto-detect based on environment
+    if (typeof window !== 'undefined') {
+        const isVercel = window.location.hostname.includes("vercel.app");
+        // In Vercel, we use the relative path /api handled by vercel.json rewrites
+        if (isVercel) return "";
+        return `http://${window.location.hostname}:800`;
+    }
+
+    return "http://127.0.0.1:800";
 };
 
 const BACKEND_URL = getBackendUrl();
