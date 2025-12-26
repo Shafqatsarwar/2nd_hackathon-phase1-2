@@ -2,11 +2,15 @@ import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
 
 const getDatabaseConfig = () => {
-    // Detect if we are in a build environment (Next.js build phase)
-    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
+    // Determine if we are in build/static generation phase
+    // Better Auth must NOT attempt a real connection during build
+    const isBuild =
+        process.env.NEXT_PHASE === 'phase-production-build' ||
+        process.env.CI === 'true' ||
+        (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production');
 
-    // During build, always use memory SQLite to prevent connection errors
-    if (isBuildPhase || !process.env.DATABASE_URL) {
+    if (isBuild || !process.env.DATABASE_URL) {
+        console.log("🛠️ Auth: Using memory fallback for build/static phase");
         return {
             provider: "sqlite",
             url: ":memory:",
@@ -14,6 +18,8 @@ const getDatabaseConfig = () => {
     }
 
     const url = process.env.DATABASE_URL;
+    console.log("📡 Auth: Using database connection");
+
     if (url.startsWith("postgres")) {
         return {
             provider: "postgresql",

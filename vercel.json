@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "npm --prefix src/frontend install && npm --prefix src/frontend run build",
+  "buildCommand": "npm install && npm run build --workspace=src/frontend",
   "outputDirectory": "src/frontend/.next",
   "rewrites": [
     {
