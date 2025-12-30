@@ -10,7 +10,12 @@
       "Bash(dir /s)",
       "Bash(dir)",
       "Bash(tree /F)",
-      "Bash(powershell \"Get-ChildItem -Recurse | Where-Object {$_Attributes -notlike ''*Directory*''} | ForEach-Object {Write-Output $_FullName}\")"
+      "Bash(powershell \"Get-ChildItem -Recurse | Where-Object {$_Attributes -notlike ''*Directory*''} | ForEach-Object {Write-Output $_FullName}\")",
+      "Bash(python -c \"from src.backend import main; print\\(''Backend imports successfully''\\)\")",
+      "Bash(python -m pip install uv)",
+      "Bash(uv sync)",
+      "Bash(dir \".specify\\\\memory\\\\*.md\")",
+      "Bash(dir \".specify\\\\memory\" /s)"
     ]
   }
 }
