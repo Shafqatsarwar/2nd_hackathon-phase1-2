@@ -63,23 +63,24 @@ export default function Home() {
 
                 <div className="max-w-5xl mx-auto grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {features.map((feature) => (
-                        <article
-                            key={feature.label}
-                            className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-2xl transition hover:border-white/30 hover:bg-white/10"
-                        >
-                            <div
-                                className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4 bg-gradient-to-br ${feature.accent} text-white font-black text-lg`}
+                        <Link key={feature.label} href="/dashboard" className="group block">
+                            <article
+                                className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-2xl transition group-hover:border-white/30 group-hover:bg-white/10 h-full"
                             >
-                                {feature.label
-                                    .split(" ")
-                                    .map((word) => word.charAt(0))
-                                    .join("")
-                                    .slice(0, 2)
-                                    .toUpperCase()}
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2">{feature.label}</h3>
-                            <p className="text-sm text-slate-300 leading-relaxed">{feature.description}</p>
-                        </article>
+                                <div
+                                    className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4 bg-gradient-to-br ${feature.accent} text-white font-black text-lg group-hover:scale-110 transition-transform`}
+                                >
+                                    {feature.label
+                                        .split(" ")
+                                        .map((word) => word.charAt(0))
+                                        .join("")
+                                        .slice(0, 2)
+                                        .toUpperCase()}
+                                </div>
+                                <h3 className="text-xl font-semibold mb-2 group-hover:text-white transition-colors">{feature.label}</h3>
+                                <p className="text-sm text-slate-300 leading-relaxed">{feature.description}</p>
+                            </article>
+                        </Link>
                     ))}
                 </div>
 

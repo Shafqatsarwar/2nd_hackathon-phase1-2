@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlmodel import create_engine, SQLModel, Session
 from sqlalchemy.pool import QueuePool
 
-load_dotenv()
+load_dotenv(".env.backend", override=True)
 
 # Database URL should be in .env: 
 # DATABASE_URL=postgresql://user:pass@ep-hostname.region.aws.neon.tech/dbname?sslmode=require

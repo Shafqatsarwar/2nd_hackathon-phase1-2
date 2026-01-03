@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import json
@@ -34,8 +34,8 @@ class ChatResponse(BaseModel):
 
 @router.post("/{user_id}/chat", response_model=ChatResponse)
 async def chat(
-    user_id: str,
-    request: ChatRequest,
+    user_id: str = Path(..., examples=["admin"], description="Enter 'admin' or 'guest_user'"),
+    request: ChatRequest = None,
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):
@@ -49,7 +49,7 @@ async def chat(
         raise HTTPException(status_code=403, detail="Not authorized to access this user's chat")
 
     # Get or create conversation
-    conversation_id = request.conversation_id
+    conversation_id = request.conversation_id if request else None
     if not conversation_id:
         # Create new conversation
         conversation = Conversation(user_id=user_id)
@@ -68,7 +68,7 @@ async def chat(
         conversation_id=conversation_id,
         user_id=user_id,
         role="user",
-        content=request.message
+        content=request.message if request else ""
     )
     session.add(user_message)
     session.commit()
@@ -78,7 +78,7 @@ async def chat(
     # For now, we implement a simple rule-based processor that follows
     # the same patterns as the MCP tools would.
     response_text = await process_natural_language_command(
-        user_id, request.message, session
+        user_id, request.message if request else "", session
     )
 
     # Store assistant response
@@ -96,6 +96,42 @@ async def chat(
         response=response_text,
         tool_calls=[]  # In a real implementation, this would contain actual tool calls
     )
+
+
+@router.get("/{user_id}/chat/history", response_model=List[Dict[str, Any]])
+async def get_chat_history(
+    user_id: str = Path(..., examples=["admin"], description="Enter 'admin' or 'guest_user'"),
+    token_user_id: str = Depends(verify_jwt),
+    session: Session = Depends(get_session)
+):
+    """
+    Fetch the most recent conversation history for a user.
+    """
+    if user_id != token_user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    from sqlmodel import select
+    conversation = session.exec(
+        select(Conversation).where(Conversation.user_id == user_id).order_by(Conversation.updated_at.desc())
+    ).first()
+
+    if not conversation:
+        return []
+
+    messages = session.exec(
+        select(Message).where(Message.conversation_id == conversation.id).order_by(Message.created_at.asc())
+    ).all()
+
+    return [
+        {
+            "id": msg.id,
+            "role": msg.role,
+            "content": msg.content,
+            "timestamp": msg.created_at.isoformat(),
+            "conversation_id": msg.conversation_id
+        }
+        for msg in messages
+    ]
 
 
 async def process_natural_language_command(user_id: str, message: str, session: Session):

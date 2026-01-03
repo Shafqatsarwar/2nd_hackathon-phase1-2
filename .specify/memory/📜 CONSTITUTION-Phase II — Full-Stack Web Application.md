@@ -16,7 +16,7 @@ Introduce **multi-user**, **persistent**, **authenticated** architecture.
 
 ### **Allowed Stack**
 
-* Frontend: Next.js ≥ 15 (App Router)
+* Frontend: Next.js ≥ 15 (App Router) (Note: Version 16 was not stable for this kind of project till December 2025)
 
 * Backend: FastAPI \+ SQLModel
 

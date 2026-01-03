@@ -18,7 +18,7 @@ from src.backend.database import create_db_and_tables, get_session, engine
 from src.backend.models import Task, TaskCreate, TaskUpdate, User
 from src.backend.auth_utils import verify_jwt
 
-app = FastAPI(title="The Evolution of Todo - Phase II")
+app = FastAPI(title="The Evolution of Todo - Phase III")
 
 
 class RootResponse(BaseModel):
@@ -28,7 +28,7 @@ class RootResponse(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "message": "Welcome to Phase II Backend",
+                "message": "Welcome to Phase III Backend",
                 "status": "Ready"
             }
         }
@@ -42,21 +42,29 @@ def custom_openapi() -> Dict[str, Any]:
     schema = get_openapi(
         title=app.title,
         version="1.0.0",
-        description="FastAPI Phase II backend for The Evolution of Todo",
+        description=(
+            "🚀 **The Evolution of Todo - Phase III Backend**\n\n"
+            "Manage tasks via REST API or AI Chat. Authenticate using specific access tokens.\n\n"
+            "### 🔑 Authentication Instructions\n"
+            "1. Click the **Authorize** button below.\n"
+            "2. For **Admin Access**:\n"
+            "   - Key: `admin` (Use this in `user_id` fields)\n"
+            "   - Value: `admin_token` (Enter this in the Bearer token field)\n"
+            "3. For **Guest Access**:\n"
+            "   - Key: `guest_user` (Use this in `user_id` fields)\n"
+            "   - Value: `guest_token` (Enter this in the Bearer token field)\n"
+            "4. After clicking **Authorize**, the lock icon will close, indicating you are **Authorized**."
+        ),
         routes=app.routes,
     )
 
     security_schemes = schema.setdefault("components", {}).setdefault("securitySchemes", {})
-    bearer = security_schemes.setdefault("bearerAuth", {
+    security_schemes["bearerAuth"] = {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": (
-            "Supply a Better Auth JWT (prefixed with `Bearer `) "
-            "or use the demo tokens: `guest_token` or `admin_token`."
-        )
-    })
-    schema["components"]["securitySchemes"]["bearerAuth"] = bearer
+        "description": "Enter `admin_token` for Admin or `guest_token` for Guest access."
+    }
     app.openapi_schema = schema
     return schema
 
@@ -88,7 +96,7 @@ app.add_middleware(
 
 @app.get("/", response_model=RootResponse)
 def read_root():
-    return RootResponse(message="Welcome to Phase II Backend", status="Ready")
+    return RootResponse(message="Welcome to Phase III Backend", status="Ready")
 
 # --- TASK CRUD ENDPOINTS ---
 
@@ -122,7 +130,7 @@ def read_root():
     }
 )
 def list_tasks(
-    user_id: str = Path(..., example="admin", description="Better Auth user ID (stored in JWT `sub`)"),
+    user_id: str = Path(..., examples=["admin"], description="Enter 'admin' or 'guest_user'"),
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):
@@ -139,8 +147,8 @@ def list_tasks(
 
 @app.post("/api/{user_id}/tasks", response_model=Task, status_code=status.HTTP_201_CREATED)
 def create_task(
-    user_id: str, 
-    task: TaskCreate, 
+    user_id: str = Path(..., examples=["admin"], description="Enter 'admin' or 'guest_user'"), 
+    task: TaskCreate = None, 
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):
@@ -160,7 +168,7 @@ def create_task(
         return db_task
     except Exception as e:
         session.rollback()
-        # Detailed error for debugging Phase II
+        # Detailed error for debugging Phase III
         print(f"ERROR creating task: {e}")
         raise HTTPException(
             status_code=500, 
@@ -169,8 +177,8 @@ def create_task(
 
 @app.get("/api/{user_id}/tasks/{id}", response_model=Task)
 def get_task(
-    user_id: str, 
-    id: int, 
+    user_id: str = Path(..., example="admin", description="Enter 'admin' or 'guest_user'"), 
+    id: int = Path(..., examples=[1], description="The ID of the task to retrieve"), 
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):
@@ -184,9 +192,9 @@ def get_task(
 
 @app.put("/api/{user_id}/tasks/{id}", response_model=Task)
 def update_task_all(
-    user_id: str, 
-    id: int, 
-    task: TaskUpdate, 
+    user_id: str = Path(..., example="admin", description="Enter 'admin' or 'guest_user'"), 
+    id: int = Path(..., examples=[1], description="The ID of the task to update"), 
+    task: TaskUpdate = None, 
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):
@@ -208,8 +216,8 @@ def update_task_all(
 
 @app.patch("/api/{user_id}/tasks/{id}/complete", response_model=Task)
 def toggle_task(
-    user_id: str, 
-    id: int, 
+    user_id: str = Path(..., example="admin", description="Enter 'admin' or 'guest_user'"), 
+    id: int = Path(..., examples=[1], description="The ID of the task to toggle"), 
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):
@@ -228,8 +236,8 @@ def toggle_task(
 
 @app.delete("/api/{user_id}/tasks/{id}")
 def delete_task(
-    user_id: str, 
-    id: int, 
+    user_id: str = Path(..., example="admin", description="Enter 'admin' or 'guest_user'"), 
+    id: int = Path(..., examples=[1], description="The ID of the task to delete"), 
     token_user_id: str = Depends(verify_jwt),
     session: Session = Depends(get_session)
 ):

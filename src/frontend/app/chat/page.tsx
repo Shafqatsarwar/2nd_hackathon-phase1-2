@@ -11,32 +11,63 @@ const authClient = createAuthClient();
 export default function ChatPage() {
     const [session, setSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [messages, setMessages] = useState<{id: number, role: string, content: string, timestamp: Date}[]>([]);
+    const [messages, setMessages] = useState<{ id: number, role: string, content: string, timestamp: Date }[]>([]);
     const [inputMessage, setInputMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const [conversationId, setConversationId] = useState<number | undefined>(undefined);
     const router = useRouter();
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
     useEffect(() => {
         async function init() {
             // Check for special Admin login first
-            const isAdmin = localStorage.getItem("admin_access") === "true";
+            const isAdmin = typeof window !== 'undefined' && localStorage.getItem("admin_access") === "true";
+
             if (isAdmin) {
-                setSession({
+                const adminSession = {
                     user: { id: "admin", name: "Khan Sarwar", email: "khansarwar1@hotmail.com" },
                     token: "admin_token"
-                });
+                };
+                setSession(adminSession);
+                await fetchHistory("admin", "admin_token");
                 setLoading(false);
                 return;
             }
 
-            const { data } = await authClient.getSession();
-            if (!data) {
+            const sessionData = await authClient.getSession();
+            if (!sessionData.data) {
                 router.push("/auth");
                 return;
             }
-            setSession(data);
+            // For Phase II/III architecture, we assume the token is available in the session object
+            // or use a placeholder if better-auth is in cookie-mode.
+            const sessionWithToken = {
+                ...sessionData.data,
+                token: (sessionData.data as any).session?.id || "guest_token" // Fallback to session ID as token if JWT plugin is purely cookie-based
+            };
+            setSession(sessionWithToken);
+            await fetchHistory(sessionWithToken.user.id, (sessionWithToken as any).token);
             setLoading(false);
+        }
+
+        async function fetchHistory(userId: string, token: string) {
+            try {
+                const response = await fetch(`/api/${userId}/chat/history`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const chatData = await response.json();
+                    if (chatData.length > 0) {
+                        setMessages(chatData.map((m: any) => ({
+                            ...m,
+                            timestamp: new Date(m.timestamp)
+                        })));
+                        setConversationId(chatData[0].conversation_id);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch chat history:", err);
+            }
         }
         init();
     }, [router]);
@@ -62,9 +93,6 @@ export default function ChatPage() {
         try {
             const userId = session.user.id;
             const token = session.token;
-
-            // Find the most recent conversation ID or use the first one if any exist
-            const conversationId = messages.length > 0 ? findConversationId() : undefined;
 
             const response = await fetch(`/api/${userId}/chat`, {
                 method: "POST",
@@ -92,6 +120,10 @@ export default function ChatPage() {
             };
 
             setMessages(prev => [...prev, assistantMessage]);
+
+            if (data.conversation_id) {
+                setConversationId(data.conversation_id);
+            }
         } catch (error) {
             console.error("Error sending message:", error);
             const errorMessage = {
@@ -204,11 +236,10 @@ export default function ChatPage() {
                                             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                                         >
                                             <div
-                                                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                                                    msg.role === "user"
-                                                        ? "bg-purple-600/20 border border-purple-500/30 rounded-br-none"
-                                                        : "bg-neutral-800/50 border border-white/10 rounded-bl-none"
-                                                }`}
+                                                className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === "user"
+                                                    ? "bg-purple-600/20 border border-purple-500/30 rounded-br-none"
+                                                    : "bg-neutral-800/50 border border-white/10 rounded-bl-none"
+                                                    }`}
                                             >
                                                 <div className="whitespace-pre-wrap">{msg.content}</div>
                                                 <div className={`text-xs mt-1 ${msg.role === "user" ? "text-purple-400/70" : "text-slate-500"}`}>

@@ -17,6 +17,9 @@ class Task(SQLModel, table=True):
     title: str
     description: Optional[str] = None
     completed: bool = Field(default=False)
+    priority: str = Field(default="medium")
+    is_recurring: bool = Field(default=False)
+    recurrence_interval: Optional[str] = None
 
     user_id: str = Field(foreign_key="user.id", index=True)
     user: Optional[User] = Relationship(back_populates="tasks")
@@ -48,10 +51,16 @@ class Message(SQLModel, table=True):
     conversation: Optional[Conversation] = Relationship(back_populates="messages")
 
 class TaskCreate(SQLModel):
-    title: str
-    description: Optional[str] = None
+    title: str = Field(..., schema_extra={"examples": ["Complete Phase III"]})
+    description: Optional[str] = Field(None, schema_extra={"examples": ["Verify all MCP tools and AI skills"]})
+    priority: Optional[str] = Field("medium", schema_extra={"examples": ["high"]})
+    is_recurring: bool = Field(False, schema_extra={"examples": [True]})
+    recurrence_interval: Optional[str] = Field(None, schema_extra={"examples": ["daily"]})
 
 class TaskUpdate(SQLModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    completed: Optional[bool] = None
+    title: Optional[str] = Field(None, schema_extra={"examples": ["Phase IV Readiness"]})
+    description: Optional[str] = Field(None, schema_extra={"examples": ["Prepare for Kubernetes deployment"]})
+    completed: Optional[bool] = Field(None, schema_extra={"examples": [True]})
+    priority: Optional[str] = Field(None, schema_extra={"examples": ["high"]})
+    is_recurring: Optional[bool] = Field(None, schema_extra={"examples": [True]})
+    recurrence_interval: Optional[str] = Field(None, schema_extra={"examples": ["daily"]})

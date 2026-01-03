@@ -21,7 +21,7 @@ A command-line tool for managing tasks in local memory.
 ### Phase II: Full-Stack Web App (FastAPI + Next.js)
 A multi-user system with persistent storage (Neon PostgreSQL) and JWT Authentication (Better Auth).
 - **Backend**: Python FastAPI + SQLModel (Port 800).
-- **Frontend**: Next.js 15+ (App Router, Port 3000).
+- **Frontend**: Next.js 15+ (App Router, Port 3000) (Note: Version 16 was not stable for this kind of project till December 2025).
 - **Deployment**: Unified Vercel deployment (frontend + backend combined).
 - **Setup**: See [guide.md](./guide.md) for detailed instructions.
 
@@ -30,12 +30,15 @@ An AI chatbot interface using OpenAI Agents SDK and MCP (Model Context Protocol)
 - **Frontend**: OpenAI ChatKit style beautiful chat interface at `/chat`.
 - **Backend**: Python FastAPI + OpenAI Agents SDK with MCP tools.
 - **MCP Server**: Lightweight implementation that provides task management tools to the AI agent.
-- **Features**: Natural language task management (add, list, complete, delete, update); conversational persistence in database.
+- **Features**: 
+    - **Natural Language Task Management**: Add, list, complete, delete, update tasks.
+    - **Web Search**: Integration with DuckDuckGo for real-time answers (e.g., "Solar prices in Pakistan").
+    - **Smart Features**: Priority tagging (High/Medium/Low) and Recurrence (Daily/Weekly/Monthly) via AI or Manual UI.
 - **State**: Use the `guest_token`, `admin_token`, or a Better Auth-issued JWT via `/auth` when exercising `/api/{user_id}` routes. Refer to `guide.md` for deployment steps.
 
-### Intermediate & Advanced Features (Planned)
-- **Intermediate**: Priorities, Tags, Search, Filter, Sort (see `specs/intermediate-features/`)
-- **Advanced**: Recurring Tasks, Due Dates & Reminders (see `specs/advanced-features/`)
+### Intermediate & Advanced Features (Implemented)
+- **Intermediate**: Priorities, Tags, Search, Filter, Sort (Completed in Phase III)
+- **Advanced**: Recurring Tasks (Completed in Phase III)
 
 ## 📁 Repository Structure
 ```text

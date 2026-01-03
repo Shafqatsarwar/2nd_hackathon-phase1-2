@@ -2,7 +2,7 @@
 
 ## 🌟 Project Overview
 This project represents the evolution of a simple CLI Todo list into a full-stack AI-powered Web Application.
-- **Frontend**: Next.js 15, TailwindCSS, Framer Motion (Glassmorphic UI)
+- **Frontend**: Next.js 15, TailwindCSS, Framer Motion (Note: Next.js 15 was chosen as version 16 was not stable for this kind of project till December 2025)
 - **Backend**: FastAPI, SQLModel, Neon (PostgreSQL)
 - **Auth**: Better Auth (Secure, Self-hosted logic)
 - **AI**: OpenAI Agents with MCP (Model Context Protocol) server architecture (Phase III)
@@ -19,7 +19,7 @@ This project represents the evolution of a simple CLI Todo list into a full-stac
 ### 1. Start the Backend (The Core)
 The backend powers the logic and database connections.
 ```powershell
-cd src/backend
+cd src/backend uv sync
 uv run uvicorn main:app --host 0.0.0.0 --port 800 --reload
 ```
 *   **Health Check**: Open `http://localhost:800/health` → `{"status": "healthy"}`
@@ -43,7 +43,19 @@ npm run dev
 *   **App**: Open `http://localhost:3000`
 *   **Note**: The root `npm run dev` now automatically starts the frontend from its subdirectory. It connects to the backend on port 800.
 
-### 3. Phase III - AI Chatbot Setup
+---
+### 3. � Contribution & CLI
+Legacy Phase I CLI tools are preserved in `src/cli`.
+To run the original CLI:
+```powershell
+uv run python src/cli/main.py
+cd src/cli
+uv run main.py
+```
+
+---
+
+### 4. Phase III - AI Chatbot Setup
 The AI-powered chatbot is fully integrated and functional.
 *   **Chat Interface**: Navigate to `http://localhost:3000/chat`
 *   **Environment**: Ensure `OPENAI_API_KEY` is set in your `.env.local` or `.env.vercel` file.
@@ -52,7 +64,7 @@ The AI-powered chatbot is fully integrated and functional.
 
 ---
 
-### 4. 🔐 Master Admin Access (Bypass Login)
+### 5. 🔐 Master Admin Access (Bypass Login)
 For development and demonstration purposes, we have a built-in Master Admin Access.
 
 *   **Master Token**: `admin_token`
@@ -68,14 +80,21 @@ For development and demonstration purposes, we have a built-in Master Admin Acce
 
 ---
 
-### 4. � Contribution & CLI
-Legacy Phase I CLI tools are preserved in `src/cli`.
-To run the original CLI:
-```powershell
-uv run python src/cli/main.py
-# cd src/cli
-# uv run main.py
-```
+### 6. 🧠 Using Phase III Features (AI & Dashboard)
+
+#### A. AI Web Search
+The Chatbot is now connected to the web via DuckDuckGo.
+*   **How to use**: Ask general knowledge questions.
+*   **Examples**:
+    *   "What is the weather in Lahore today?"
+    *   "Current price of solar panels in Pakistan."
+*   **Note**: The AI automatically extracts keywords (e.g., "Solar prices Pakistan") to find the best results.
+
+#### B. Manual Task Controls
+You don't always need the AI. The Dashboard now supports full manual control:
+*   **Priority**: Use the dropdown (Low/Med/High) when adding a task.
+*   **Recurrence**: Check the "Repeat" box to set Daily/Weekly/Monthly tasks.
+*   **Visuals**: Tasks now show colored badges for priority and a `↻` icon for recurring items.
 
 ---
 
@@ -279,6 +298,12 @@ When you open `/docs` (locally or on Vercel) you can authorize requests with one
    * `Bearer admin_token` – impersonates `khansarwar1@hotmail.com` with full access.
    * `Bearer <your JWT>` – any Better Auth session token exported from the frontend (must share `BETTER_AUTH_SECRET`).
 3. Press **Authorize**, then **Close**; Swagger now sends that bearer token with every `/api/{user_id}/*` request until you clear it.
+
+### 🔑 Quick Authorization Credentials
+| User Type | `user_id` (Key) | Auth Token (Value) |
+| :--- | :--- | :--- |
+| **Admin** | `admin` | `admin_token` |
+| **Guest** | `guest_user` | `guest_token` |
 
 Use the “Try it out” buttons after authorizing to exercise the CRUD/chat endpoints, and copy the Authorization value from Swagger to make sure it matches what the UI is sending if you still see 400/401 responses.
 

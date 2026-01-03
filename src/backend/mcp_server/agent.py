@@ -3,6 +3,7 @@ from openai import OpenAI
 import json
 import os
 from .task_tools import MCPTaskTools
+from .web_search import search_web
 from ..database import get_session
 from sqlmodel import Session
 
@@ -21,6 +22,20 @@ class TodoOpenAIAgent:
             {
                 "type": "function",
                 "function": {
+                    "name": "web_search",
+                    "description": "Search the web for general knowledge, news, weather, etc.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "The search query"}
+                        },
+                        "required": ["query"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "add_task",
                     "description": "Create a new task",
                     "parameters": {
@@ -28,7 +43,10 @@ class TodoOpenAIAgent:
                         "properties": {
                             "user_id": {"type": "string", "description": "The user ID"},
                             "title": {"type": "string", "description": "Task title"},
-                            "description": {"type": "string", "description": "Task description (optional)"}
+                            "description": {"type": "string", "description": "Task description (optional)"},
+                            "priority": {"type": "string", "enum": ["low", "medium", "high"], "description": "Priority level (default: medium)"},
+                            "is_recurring": {"type": "boolean", "description": "Is this a recurring task?"},
+                            "recurrence_interval": {"type": "string", "description": "Interval e.g. 'daily', 'weekly'"}
                         },
                         "required": ["user_id", "title"]
                     }
@@ -90,7 +108,10 @@ class TodoOpenAIAgent:
                             "user_id": {"type": "string", "description": "The user ID"},
                             "task_id": {"type": "integer", "description": "The task ID to update"},
                             "title": {"type": "string", "description": "New title (optional)"},
-                            "description": {"type": "string", "description": "New description (optional)"}
+                            "description": {"type": "string", "description": "New description (optional)"},
+                            "priority": {"type": "string", "enum": ["low", "medium", "high"], "description": "New priority"},
+                            "is_recurring": {"type": "boolean", "description": "Update recurrence status"},
+                            "recurrence_interval": {"type": "string", "description": "Update recurrence interval"}
                         },
                         "required": ["user_id", "task_id"]
                     }
@@ -114,6 +135,13 @@ class TodoOpenAIAgent:
                     "Help users manage their tasks using the provided tools. "
                     "Always use the appropriate tool for the user's request. "
                     "Only use the tools provided, do not try to access the database directly. "
+                    "When adding tasks, the tools now include automatic 'Analysis Skills' which identify priority and suggested tags. "
+                    "Incorporate this analysis into your response to the user to showcase your intelligence. "
+                    "For general knowledge questions (news, weather, etc.), use the 'web_search' tool. "
+                    "IMPORTANT: When using 'web_search', extract only the essential keywords from the user's request. "
+                    "Do NOT include filler words like 'what about', 'how to', 'next month', or conversational phrasing. "
+                    "Example: for 'buy solar system in pakistan next month', search for 'solar system prices pakistan'. "
+                    "Keep web search answers concise (approx 10-30 words). "
                     f"The current user ID is: {user_id}"
                 )
             },
@@ -125,7 +153,7 @@ class TodoOpenAIAgent:
 
         # Call the OpenAI API with function calling
         response = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",  # You can change this to gpt-4 if preferred
+            model="gpt-4o-mini",
             messages=messages,
             tools=self.tools,
             tool_choice="auto"
@@ -171,7 +199,10 @@ class TodoOpenAIAgent:
                     result = temp_task_tools.add_task(
                         user_id=function_args["user_id"],
                         title=function_args["title"],
-                        description=function_args.get("description")
+                        description=function_args.get("description"),
+                        priority=function_args.get("priority", "medium"),
+                        is_recurring=function_args.get("is_recurring", False),
+                        recurrence_interval=function_args.get("recurrence_interval")
                     )
                 elif function_name == "list_tasks":
                     result = temp_task_tools.list_tasks(
@@ -193,7 +224,14 @@ class TodoOpenAIAgent:
                         user_id=function_args["user_id"],
                         task_id=function_args["task_id"],
                         title=function_args.get("title"),
-                        description=function_args.get("description")
+                        description=function_args.get("description"),
+                        priority=function_args.get("priority"),
+                        is_recurring=function_args.get("is_recurring"),
+                        recurrence_interval=function_args.get("recurrence_interval")
+                    )
+                elif function_name == "web_search":
+                    result = search_web(
+                        query=function_args["query"]
                     )
                 else:
                     result = {"error": f"Unknown tool: {function_name}"}
@@ -214,7 +252,7 @@ class TodoOpenAIAgent:
 
                 # Get the final response from the assistant
                 final_response = self.client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o-mini",
                     messages=messages
                 )
 

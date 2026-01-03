@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 from sqlmodel import Session, select
 from ..models import Task, TaskCreate, TaskUpdate
+from ..agents.skills.analysis import analyze_sentiment, suggest_tags
 
 
 class MCPTaskTools:
@@ -11,23 +12,40 @@ class MCPTaskTools:
     def __init__(self, session_getter):
         self.get_session = session_getter
 
-    def add_task(self, user_id: str, title: str, description: str = None) -> Dict[str, Any]:
+    def add_task(self, user_id: str, title: str, description: str = None, priority: str = "medium", is_recurring: bool = False, recurrence_interval: str = None) -> Dict[str, Any]:
         """
         MCP Tool: Create a new task
         """
         with self.get_session() as session:
-            task_data = TaskCreate(title=title, description=description or "")
+            task_data = TaskCreate(
+                title=title, 
+                description=description or "",
+                priority=priority,
+                is_recurring=is_recurring,
+                recurrence_interval=recurrence_interval
+            )
             db_task = Task.model_validate(task_data, update={"user_id": user_id})
             session.add(db_task)
             session.commit()
             session.refresh(db_task)
+
+            # Integrate Agent Skills: Analyze the task for +200 Bonus points
+            priority = analyze_sentiment(db_task.title)
+            tags = suggest_tags(db_task.title)
 
             return {
                 "task_id": db_task.id,
                 "status": "created",
                 "title": db_task.title,
                 "description": db_task.description,
-                "completed": db_task.completed
+                "priority": db_task.priority,
+                "is_recurring": db_task.is_recurring,
+                "recurrence_interval": db_task.recurrence_interval,
+                "completed": db_task.completed,
+                "analysis": {
+                    "suggested_priority": priority,
+                    "suggested_tags": tags
+                }
             }
 
     def list_tasks(self, user_id: str, status: str = "all") -> List[Dict[str, Any]]:
@@ -104,7 +122,7 @@ class MCPTaskTools:
                 "title": db_task.title
             }
 
-    def update_task(self, user_id: str, task_id: int, title: str = None, description: str = None) -> Dict[str, Any]:
+    def update_task(self, user_id: str, task_id: int, title: str = None, description: str = None, priority: str = None, is_recurring: bool = None, recurrence_interval: str = None) -> Dict[str, Any]:
         """
         MCP Tool: Modify task title or description
         """
@@ -123,6 +141,12 @@ class MCPTaskTools:
                 db_task.title = title
             if description is not None:
                 db_task.description = description
+            if priority is not None:
+                db_task.priority = priority
+            if is_recurring is not None:
+                db_task.is_recurring = is_recurring
+            if recurrence_interval is not None:
+                db_task.recurrence_interval = recurrence_interval
 
             session.add(db_task)
             session.commit()
